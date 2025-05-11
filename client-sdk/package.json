@@ -1,0 +1,33 @@
+{
+  "name": "@monitoring/sdk",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "vite build"
+  },
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "monitoring",
+    "sdk",
+    "errors",
+    "performance",
+    "frontend"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^22.15.14",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}
