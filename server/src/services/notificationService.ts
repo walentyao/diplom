@@ -1,5 +1,6 @@
 import nodemailer from 'nodemailer';
 import AlertRule from '../models/AlertRule.js';
+import axios from 'axios';
 
 interface NotificationPayload {
   rule: AlertRule;
@@ -11,6 +12,7 @@ interface NotificationPayload {
 class NotificationService {
   private static instance: NotificationService;
   private transporter: nodemailer.Transporter;
+  private readonly telegramBotToken: string;
 
   private constructor() {
     this.transporter = nodemailer.createTransport({
@@ -22,6 +24,11 @@ class NotificationService {
         pass: process.env.SMTP_PASS,
       },
     });
+    
+    this.telegramBotToken = process.env.TELEGRAM_BOT_TOKEN || '';
+    if (!this.telegramBotToken) {
+      console.warn('TELEGRAM_BOT_TOKEN environment variable not set. Telegram notifications will not work.');
+    }
   }
 
   public static getInstance(): NotificationService {
@@ -33,10 +40,21 @@ class NotificationService {
 
   public async sendNotification(payload: NotificationPayload): Promise<void> {
     try {
-      if (payload.rule.notifyType === 'webhook') {
-        await this.sendWebhookNotification(payload);
-      } else if (payload.rule.notifyType === 'email') {
-        await this.sendEmailNotification(payload);
+      switch (payload.rule.notifyType) {
+        case 'webhook':
+          await this.sendWebhookNotification(payload);
+          break;
+        case 'email':
+          await this.sendEmailNotification(payload);
+          break;
+        case 'slack':
+          await this.sendSlackNotification(payload);
+          break;
+        case 'telegram':
+          await this.sendTelegramNotification(payload);
+          break;
+        default:
+          throw new Error(`Unsupported notification type: ${payload.rule.notifyType}`);
       }
     } catch (error) {
       console.error('Failed to send notification:', error);
@@ -102,6 +120,115 @@ class NotificationService {
       throw error;
     }
   }
+
+  private async sendSlackNotification(payload: NotificationPayload): Promise<void> {
+    try {
+      // Slack webhook URL should be provided in the notifyTarget
+      const webhookUrl = payload.rule.notifyTarget;
+      
+      // Format according to Slack's webhook API
+      const response = await axios.post(webhookUrl, {
+        text: `Alert: ${payload.rule.type} threshold exceeded`,
+        blocks: [
+          {
+            type: "header",
+            text: {
+              type: "plain_text",
+              text: "🚨 Alert Notification",
+              emoji: true
+            }
+          },
+          {
+            type: "section",
+            fields: [
+              {
+                type: "mrkdwn",
+                text: `*Rule ID:* ${payload.rule.id}`
+              },
+              {
+                type: "mrkdwn",
+                text: `*Type:* ${payload.rule.type}`
+              },
+              {
+                type: "mrkdwn",
+                text: `*Level:* ${payload.rule.level || 'N/A'}`
+              },
+              {
+                type: "mrkdwn",
+                text: `*Project ID:* ${payload.rule.projectId}`
+              },
+              {
+                type: "mrkdwn",
+                text: `*Count:* ${payload.count}`
+              },
+              {
+                type: "mrkdwn",
+                text: `*Threshold:* ${payload.rule.threshold}`
+              },
+              {
+                type: "mrkdwn",
+                text: `*Interval:* ${payload.rule.intervalMinutes} minutes`
+              },
+              {
+                type: "mrkdwn",
+                text: `*Timestamp:* ${payload.timestamp.toISOString()}`
+              }
+            ]
+          }
+        ]
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Slack notification failed with status ${response.status}`);
+      }
+      
+      console.log(`Slack notification sent successfully to ${payload.rule.notifyTarget}`);
+    } catch (error) {
+      console.error('Slack notification failed:', error);
+      throw error;
+    }
+  }
+
+  private async sendTelegramNotification(payload: NotificationPayload): Promise<void> {
+    try {
+      if (!this.telegramBotToken) {
+        throw new Error('TELEGRAM_BOT_TOKEN not configured');
+      }
+
+      // Chat ID should be provided in the notifyTarget
+      const chatId = payload.rule.notifyTarget;
+      const apiUrl = `https://api.telegram.org/bot${this.telegramBotToken}/sendMessage`;
+      
+      // Format message for Telegram
+      const message = `
+🚨 *ALERT NOTIFICATION*
+*Rule ID:* ${payload.rule.id}
+*Type:* ${payload.rule.type}
+*Level:* ${payload.rule.level || 'N/A'}
+*Project ID:* ${payload.rule.projectId}
+*Count:* ${payload.count}
+*Threshold:* ${payload.rule.threshold}
+*Interval:* ${payload.rule.intervalMinutes} minutes
+*Timestamp:* ${payload.timestamp.toISOString()}
+${payload.details ? `*Details:*\n\`\`\`\n${JSON.stringify(payload.details, null, 2)}\n\`\`\`` : ''}
+`;
+
+      const response = await axios.post(apiUrl, {
+        chat_id: chatId,
+        text: message,
+        parse_mode: 'Markdown'
+      });
+
+      if (response.status !== 200) {
+        throw new Error(`Telegram notification failed with status ${response.status}`);
+      }
+      
+      console.log(`Telegram notification sent successfully to ${chatId}`);
+    } catch (error) {
+      console.error('Telegram notification failed:', error);
+      throw error;
+    }
+  }
 }
 
-export default NotificationService; 
+export default NotificationService;

@@ -22,6 +22,8 @@ services:
       - SMTP_PORT=587
       - SMTP_USER=example@example.com
       - SMTP_PASS=secret
+      - JWT_SECRET=your_jwt_secret_key_change_in_production
+      - TELEGRAM_BOT_TOKEN=your_telegram_bot_token
     depends_on:
       - postgres
     volumes:

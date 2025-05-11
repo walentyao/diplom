@@ -5,7 +5,9 @@ import sequelize from './config/database.js';
 import logRoutes from './routes/logRoutes.js';
 import alertRoutes from './routes/alertRoutes.js';
 import eventRoutes from './routes/eventRoutes';
+import anomalyRoutes from './routes/anomalyRoutes'; // Добавлен импорт маршрутов аномалий
 import AlertService from './services/alertService.js';
+import { AnomalyService } from './services/anomalyService'; // Добавлен импорт сервиса аномалий
 
 dotenv.config();
 
@@ -20,6 +22,7 @@ app.use(express.json());
 app.use('/api', logRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/events', eventRoutes);
+app.use('/api/anomalies', anomalyRoutes); // Добавлены маршруты аномалий
 
 // Health check endpoint
 app.get('/health', (_, res) => {
@@ -54,6 +57,11 @@ const startServer = async () => {
     // Start checking for alerts
     await alertService.startChecking();
     console.log('Alert service started');
+    
+    // Initialize anomaly service
+    const anomalyService = AnomalyService.getInstance();
+    await anomalyService.startPeriodicCheck();
+    console.log('Anomaly service started');
     
     // Start listening
     app.listen(port, () => {

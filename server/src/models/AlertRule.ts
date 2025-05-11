@@ -10,7 +10,7 @@ export interface AlertRuleAttributes {
   projectId: string;
   isActive: boolean;
   lastChecked?: Date;
-  notifyType: 'webhook' | 'email';
+  notifyType: 'email' | 'webhook' | 'slack' | 'telegram';
   notifyTarget: string;
 }
 
@@ -23,7 +23,7 @@ class AlertRule extends Model<AlertRuleAttributes> implements AlertRuleAttribute
   public projectId!: string;
   public isActive!: boolean;
   public lastChecked?: Date;
-  public notifyType!: 'webhook' | 'email';
+  public notifyType!: 'email' | 'webhook' | 'slack' | 'telegram';
   public notifyTarget!: string;
 }
 
@@ -76,7 +76,7 @@ AlertRule.init(
       allowNull: true,
     },
     notifyType: {
-      type: DataTypes.ENUM('webhook', 'email'),
+      type: DataTypes.ENUM('email', 'webhook', 'slack', 'telegram'),
       allowNull: false,
       defaultValue: 'webhook',
     },
@@ -93,4 +93,4 @@ AlertRule.init(
   }
 );
 
-export default AlertRule; 
+export default AlertRule;
