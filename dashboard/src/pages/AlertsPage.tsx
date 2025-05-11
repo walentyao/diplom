@@ -1,21 +1,33 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
+import styles from './AlertsPage.module.css';
 
 interface AlertRule {
   id: number;
-  name: string;
-  condition: string;
+  type: 'error' | 'performance' | 'request' | 'custom_event';
   threshold: number;
+  intervalMinutes: number;
+  level?: 'info' | 'warn' | 'error' | 'critical';
+  projectId: string;
   isActive: boolean;
+  notifyType: 'email' | 'webhook' | 'slack' | 'telegram';
+  notifyTarget: string;
 }
 
-export default function AlertsPage() {
+const defaultNewRule: Omit<AlertRule, 'id'> = {
+  type: 'error',
+  threshold: 1,
+  intervalMinutes: 5,
+  level: 'error',
+  projectId: '',
+  isActive: true,
+  notifyType: 'email',
+  notifyTarget: '',
+};
+
+const AlertsPage: React.FC = () => {
   const [rules, setRules] = useState<AlertRule[]>([]);
-  const [newRule, setNewRule] = useState({
-    name: '',
-    condition: '',
-    threshold: 0,
-  });
+  const [newRule, setNewRule] = useState<Omit<AlertRule, 'id'>>(defaultNewRule);
   const apiUrl = import.meta.env.VITE_API_URL;
   const appVersion = import.meta.env.VITE_APP_VERSION;
   const isDevMode = import.meta.env.VITE_NODE_ENV === 'development';
@@ -30,8 +42,8 @@ export default function AlertsPage() {
 
   const fetchRules = async () => {
     try {
-      const response = await axios.get(`${apiUrl}/alerts`);
-      setRules(response.data);
+      const response = await api.get(`${apiUrl}/alerts/rules`);
+      setRules(response.data.data || []);
     } catch (error) {
       console.error('Error fetching alert rules:', error);
     }
@@ -40,8 +52,8 @@ export default function AlertsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post(`${apiUrl}/alerts`, newRule);
-      setNewRule({ name: '', condition: '', threshold: 0 });
+      await api.post(`${apiUrl}/alerts/rules`, newRule);
+      setNewRule(defaultNewRule);
       fetchRules();
     } catch (error) {
       console.error('Error creating alert rule:', error);
@@ -50,87 +62,146 @@ export default function AlertsPage() {
 
   const toggleRule = async (id: number, isActive: boolean) => {
     try {
-      await axios.patch(`${apiUrl}/alerts/${id}`, { isActive: !isActive });
+      await api.put(`${apiUrl}/alerts/rules/${id}`, { isActive: !isActive });
       fetchRules();
     } catch (error) {
       console.error('Error toggling alert rule:', error);
     }
   };
 
+  const deleteRule = async (id: number) => {
+    try {
+      await api.delete(`${apiUrl}/alerts/rules/${id}`);
+      fetchRules();
+    } catch (error) {
+      console.error('Error deleting alert rule:', error);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className={styles.container}>
       {/* Add New Rule Form */}
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-medium mb-4">Add New Alert Rule</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Rule Name</label>
+      <div className={styles.card}>
+        <h2 className={styles.textLg}>Add New Alert Rule</h2>
+        <form onSubmit={handleSubmit} className={styles.form}>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Type</label>
+            <select
+              value={newRule.type}
+              onChange={e => setNewRule({ ...newRule, type: e.target.value as AlertRule['type'] })}
+              className={styles.inputSelect}
+              required
+            >
+              <option value="error">Error</option>
+              <option value="performance">Performance</option>
+              <option value="request">Request</option>
+              <option value="custom_event">Custom Event</option>
+            </select>
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Level</label>
+            <select
+              value={newRule.level}
+              onChange={e => setNewRule({ ...newRule, level: e.target.value as AlertRule['level'] })}
+              className={styles.inputSelect}
+            >
+              <option value="">Any</option>
+              <option value="info">Info</option>
+              <option value="warn">Warn</option>
+              <option value="error">Error</option>
+              <option value="critical">Critical</option>
+            </select>
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Project ID</label>
             <input
               type="text"
-              value={newRule.name}
-              onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              value={newRule.projectId}
+              onChange={e => setNewRule({ ...newRule, projectId: e.target.value })}
+              className={styles.input}
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Condition</label>
-            <select
-              value={newRule.condition}
-              onChange={(e) => setNewRule({ ...newRule, condition: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-              required
-            >
-              <option value="">Select condition</option>
-              <option value="error_rate">Error Rate</option>
-              <option value="response_time">Response Time</option>
-              <option value="cpu_usage">CPU Usage</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Threshold</label>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Threshold</label>
             <input
               type="number"
               value={newRule.threshold}
-              onChange={(e) => setNewRule({ ...newRule, threshold: Number(e.target.value) })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              onChange={e => setNewRule({ ...newRule, threshold: Number(e.target.value) })}
+              className={styles.input}
               required
             />
           </div>
-          <button
-            type="submit"
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-          >
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Interval (minutes)</label>
+            <input
+              type="number"
+              value={newRule.intervalMinutes}
+              onChange={e => setNewRule({ ...newRule, intervalMinutes: Number(e.target.value) })}
+              className={styles.input}
+              required
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Notification Type</label>
+            <select
+              value={newRule.notifyType}
+              onChange={e => setNewRule({ ...newRule, notifyType: e.target.value as AlertRule['notifyType'] })}
+              className={styles.inputSelect}
+              required
+            >
+              <option value="email">Email</option>
+              <option value="webhook">Webhook</option>
+              <option value="slack">Slack</option>
+              <option value="telegram">Telegram</option>
+            </select>
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.label}>Notification Target</label>
+            <input
+              type="text"
+              value={newRule.notifyTarget}
+              onChange={e => setNewRule({ ...newRule, notifyTarget: e.target.value })}
+              className={styles.input}
+              required
+            />
+          </div>
+          <button type="submit" className={styles.btnSubmit}>
             Add Rule
           </button>
         </form>
       </div>
 
       {/* Active Rules List */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h2 className="text-lg font-medium">Active Rules</h2>
+      <div className={styles.card}>
+        <div className={styles.cardHeader}>
+          <h2 className={styles.textLg}>Alert Rules</h2>
         </div>
-        <ul className="divide-y divide-gray-200">
+        <ul className={styles.list}>
           {rules.map((rule) => (
-            <li key={rule.id} className="px-6 py-4">
-              <div className="flex items-center justify-between">
+            <li key={rule.id} className={styles.listItem}>
+              <div className={styles.flex}>
                 <div>
-                  <h3 className="text-sm font-medium text-gray-900">{rule.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    {rule.condition} {'>'} {rule.threshold}
+                  <h3 className={styles.textSm}>[{rule.type}] {rule.level || 'any'} / {rule.projectId}</h3>
+                  <p className={styles.textGray}>
+                    Threshold: {rule.threshold} in {rule.intervalMinutes} min<br />
+                    Notify: {rule.notifyType} → {rule.notifyTarget}
                   </p>
                 </div>
-                <button
-                  onClick={() => toggleRule(rule.id, rule.isActive)}
-                  className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    rule.isActive
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}
-                >
-                  {rule.isActive ? 'Active' : 'Inactive'}
-                </button>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => toggleRule(rule.id, rule.isActive)}
+                    className={`${styles.btnToggle} ${rule.isActive ? styles.btnActive : styles.btnInactive}`}
+                  >
+                    {rule.isActive ? 'Active' : 'Inactive'}
+                  </button>
+                  <button
+                    onClick={() => deleteRule(rule.id)}
+                    className={styles.btnInactive}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </li>
           ))}
@@ -138,4 +209,6 @@ export default function AlertsPage() {
       </div>
     </div>
   );
-}
+};
+
+export default AlertsPage;

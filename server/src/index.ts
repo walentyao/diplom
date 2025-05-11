@@ -5,7 +5,8 @@ import sequelize from './config/database.js';
 import logRoutes from './routes/logRoutes.js';
 import alertRoutes from './routes/alertRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
-import anomalyRoutes from './routes/anomalyRoutes.js'; // Добавлен импорт маршрутов аномалий
+import anomalyRoutes from './routes/anomalyRoutes.js';
+import authRouter from './routes/authRoutes.js' // Добавлен импорт маршрутов аномалий
 import AlertService from './services/alertService.js';
 import { AnomalyService } from './services/anomalyService.js'; // Добавлен импорт сервиса аномалий
 
@@ -23,6 +24,7 @@ app.use('/api', logRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/anomalies', anomalyRoutes); // Добавлены маршруты аномалий
+app.use('/api/auth', authRouter)
 
 // Health check endpoint
 app.get('/health', (_, res) => {

@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { AdjustmentsVerticalIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
+import api from '../api';
+import styles from './LogsPage.module.css';
 
 interface Log {
   id: string;
@@ -14,6 +16,7 @@ interface Log {
 export default function LogsPage() {
   const [logs, setLogs] = useState<Log[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filter, setFilter] = useState({
     level: '',
     startDate: '',
@@ -42,8 +45,9 @@ export default function LogsPage() {
       if (filter.endDate) url += `endDate=${filter.endDate}&`;
       if (filter.search) url += `search=${filter.search}&`;
 
-      const response = await axios.get(url);
-      setLogs(response.data);
+      const response = await api.get(url);
+      // Гарантируем, что logs всегда массив
+      setLogs(Array.isArray(response.data) ? response.data : response.data?.data || []);
     } catch (error) {
       console.error('Error fetching logs:', error);
     } finally {
@@ -61,101 +65,160 @@ export default function LogsPage() {
     fetchLogs();
   };
 
+  const getSeverityClass = (level: string, score?: number) => {
+    if (level === 'error' || (score && score > 70)) {
+      return styles.severityError;
+    } else if (level === 'warning' || (score && score > 40)) {
+      return styles.severityWarning;
+    } else {
+      return styles.severityInfo;
+    }
+  };
+
   return (
-    <div className="space-y-4">
-      {/* Filters */}
-      <div className="bg-white p-4 rounded-lg shadow space-y-4">
-        <h2 className="text-lg font-medium">Filters</h2>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Level</label>
-            <select
-              name="level"
-              value={filter.level}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            >
-              <option value="">All</option>
-              <option value="error">Error</option>
-              <option value="warning">Warning</option>
-              <option value="info">Info</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Start Date</label>
-            <input
-              type="datetime-local"
-              name="startDate"
-              value={filter.startDate}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">End Date</label>
-            <input
-              type="datetime-local"
-              name="endDate"
-              value={filter.endDate}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Search</label>
-            <input
-              type="text"
-              name="search"
-              value={filter.search}
-              onChange={handleFilterChange}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div className="col-span-1 md:col-span-4">
-            <button
-              type="submit"
-              className="mt-2 w-full inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-            >
-              Apply Filters
-            </button>
-          </div>
-        </form>
+    <div className={styles.container}>
+      {/* Header with filter toggle */}
+      <div className={styles.header}>
+        <h2 className={styles.title}>Application Logs</h2>
+        <div className={styles.actions}>
+          <button
+            onClick={() => fetchLogs()}
+            className={styles.refreshButton}
+            disabled={loading}
+          >
+            <ArrowPathIcon className={`${styles.refreshIcon} ${loading ? styles.spin : ''}`} />
+            Refresh
+          </button>
+          <button
+            onClick={() => setIsFilterOpen(!isFilterOpen)}
+            className={styles.filterButton}
+          >
+            <AdjustmentsVerticalIcon className={styles.filterIcon} />
+            Filters
+          </button>
+        </div>
       </div>
+      
+      {/* Filters */}
+      {isFilterOpen && (
+        <div className={styles.card}>
+          <h3 className={styles.cardTitle}>Log Filters</h3>
+          <form onSubmit={handleSubmit} className={styles.filterForm}>
+            <div>
+              <label className={styles.label}>Log Level</label>
+              <select
+                name="level"
+                value={filter.level}
+                onChange={handleFilterChange}
+                className={styles.select}
+              >
+                <option value="">All Levels</option>
+                <option value="error">Error</option>
+                <option value="warning">Warning</option>
+                <option value="info">Info</option>
+                <option value="debug">Debug</option>
+              </select>
+            </div>
+            <div>
+              <label className={styles.label}>Start Date</label>
+              <input
+                type="datetime-local"
+                name="startDate"
+                value={filter.startDate}
+                onChange={handleFilterChange}
+                className={styles.input}
+              />
+            </div>
+            <div>
+              <label className={styles.label}>End Date</label>
+              <input
+                type="datetime-local"
+                name="endDate"
+                value={filter.endDate}
+                onChange={handleFilterChange}
+                className={styles.input}
+              />
+            </div>
+            <div>
+              <label className={styles.label}>Search Term</label>
+              <input
+                type="text"
+                name="search"
+                placeholder="Search in log messages"
+                value={filter.search}
+                onChange={handleFilterChange}
+                className={styles.input}
+              />
+            </div>
+            <div className={styles.filterActions}>
+              <button
+                type="submit"
+                className={styles.applyButton}
+              >
+                Apply Filters
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Logs Table */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className={styles.card}>
         {loading ? (
-          <div className="p-4 text-center">Loading...</div>
+          <div className={styles.loading}>
+            <ArrowPathIcon className={styles.loadingIcon} />
+            <p className={styles.loadingText}>Loading logs...</p>
+          </div>
+        ) : logs.length === 0 ? (
+          <div className={styles.noLogs}>
+            <p className={styles.noLogsText}>No logs found matching your criteria.</p>
+          </div>
         ) : (
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {logs.map((log) => (
-                <tr key={log.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span
-                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                      ${log.level === 'error' ? 'bg-red-100 text-red-800' : 
-                        log.level === 'warning' ? 'bg-yellow-100 text-yellow-800' : 
-                        'bg-green-100 text-green-800'}`}
-                    >
-                      {log.level}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{log.message}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(log.timestamp).toLocaleString()}
-                  </td>
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead className={styles.tableHeader}>
+                <tr>
+                  <th className={styles.tableHeaderCell}>Level</th>
+                  <th className={styles.tableHeaderCell}>Message</th>
+                  <th className={styles.tableHeaderCell}>Timestamp</th>
+                  <th className={styles.tableHeaderCell}>Severity</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className={styles.tableBody}>
+                {logs.map((log) => (
+                  <tr key={log.id} className={styles.tableRow}>
+                    <td className={styles.tableCell}>
+                      <span
+                        className={`${styles.badge} ${
+                          log.level === 'error' ? styles.badgeError : 
+                          log.level === 'warning' ? styles.badgeWarning : 
+                          log.level === 'debug' ? styles.badgeDebug :
+                          styles.badgeInfo
+                        }`}
+                      >
+                        {log.level}
+                      </span>
+                    </td>
+                    <td className={styles.tableCell}>{log.message}</td>
+                    <td className={styles.tableCell}>
+                      {new Date(log.timestamp).toLocaleString()}
+                    </td>
+                    <td className={styles.tableCell}>
+                      <div className={styles.severity}>
+                        <div className={`${styles.severityBar} ${getSeverityClass(log.level, log.severityScore)}`}>
+                          <div 
+                            className={styles.severityFill} 
+                            style={{ width: `${log.severityScore || 0}%` }}
+                          ></div>
+                        </div>
+                        <span className={styles.severityScore}>{log.severityScore || 0}</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </div>
     </div>

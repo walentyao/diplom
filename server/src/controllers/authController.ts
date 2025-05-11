@@ -28,6 +28,25 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
+export const register = async (req: Request, res: Response) => {
+  try {
+    const { username, password, role = 'user' } = req.body;
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+    // Проверка на уникальность username
+    const existingUser = await User.findOne({ where: { username } });
+    if (existingUser) {
+      return res.status(409).json({ error: 'Username already exists' });
+    }
+    const user = await User.create({ username, password, role });
+    res.status(201).json({ id: user.id, username: user.username, role: user.role });
+  } catch (error) {
+    console.error('Register error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const createApiKey = async (req: Request, res: Response) => {
   try {
     const { projectId } = req.body;
@@ -63,4 +82,4 @@ export const deactivateApiKey = async (req: Request, res: Response) => {
     }
     res.status(500).json({ error: 'Internal server error' });
   }
-}; 
+};

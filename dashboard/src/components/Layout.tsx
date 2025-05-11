@@ -3,67 +3,131 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   DocumentTextIcon, 
   BellAlertIcon, 
-  ChartBarIcon 
+  ChartBarIcon,
+  Bars3Icon,
+  XMarkIcon 
 } from '@heroicons/react/24/outline';
+import { useState } from 'react';
+import styles from './Layout.module.css';
 
 interface LayoutProps {
   children: ReactNode;
 }
 
 const navigation = [
-  { name: 'Logs', href: '/', icon: DocumentTextIcon },
+  { name: 'Statistics', href: '/', icon: ChartBarIcon },
+  { name: 'Logs', href: '/logs', icon: DocumentTextIcon },
   { name: 'Alerts', href: '/alerts', icon: BellAlertIcon },
-  { name: 'Statistics', href: '/stats', icon: ChartBarIcon },
 ];
 
 export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-            Monitoring Dashboard
-          </h1>
-        </div>
-      </header>
+    <div className={styles.container}>
+      {/* Mobile sidebar */}
+      <div className={`${styles.mobileSidebar} ${sidebarOpen ? styles.block : styles.hidden}`} role="dialog" aria-modal="true">
+        <div className={styles.overlay} aria-hidden="true" onClick={() => setSidebarOpen(false)}></div>
+        <div className={styles.sidebarContent}>
+          <div className={styles.closeButtonContainer}>
+            <button
+              type="button"
+              className={styles.closeButton}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <span className="sr-only">Close sidebar</span>
+              <XMarkIcon className={styles.closeIcon} aria-hidden="true" />
+            </button>
+          </div>
 
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 min-h-screen bg-white shadow">
-          <nav className="mt-5 px-2">
-            {navigation.map((item) => {
-              const isActive = location.pathname === item.href;
-              return (
-                <Link
-                  key={item.name}
-                  to={item.href}
-                  className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
-                    isActive
-                      ? 'bg-gray-100 text-gray-900'
-                      : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.icon
-                    className={`mr-4 h-6 w-6 flex-shrink-0 ${
-                      isActive ? 'text-gray-500' : 'text-gray-400 group-hover:text-gray-500'
-                    }`}
-                    aria-hidden="true"
-                  />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
+          <div className={styles.sidebarNavContainer}>
+            <div className={styles.sidebarHeader}>
+              <h1 className={styles.sidebarTitle}>Monitoring Dashboard</h1>
+            </div>
+            <nav className={styles.navList}>
+              {navigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`${styles.navItem} ${isActive ? styles.activeNavItem : styles.inactiveNavItem}`}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <item.icon
+                      className={`${styles.navIcon} ${isActive ? styles.activeNavIcon : styles.inactiveNavIcon}`}
+                      aria-hidden="true"
+                    />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      {/* Static sidebar for desktop */}
+      <div className={styles.desktopSidebar}>
+        <div className={styles.sidebarContent}>
+          <div className={styles.sidebarNavContainer}>
+            <div className={styles.sidebarHeader}>
+              <h1 className={styles.sidebarTitle}>Monitoring Dashboard</h1>
+            </div>
+            <nav className={styles.navList}>
+              {navigation.map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.name}
+                    to={item.href}
+                    className={`${styles.navItem} ${isActive ? styles.activeNavItem : styles.inactiveNavItem}`}
+                  >
+                    <item.icon
+                      className={`${styles.navIcon} ${isActive ? styles.activeNavIcon : styles.inactiveNavIcon}`}
+                      aria-hidden="true"
+                    />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.mainContent}>
+        {/* Top nav */}
+        <div className={styles.topNav}>
+          <button
+            type="button"
+            className={styles.menuButton}
+            onClick={() => setSidebarOpen(true)}
+          >
+            <span className="sr-only">Open sidebar</span>
+            <Bars3Icon className={styles.menuIcon} aria-hidden="true" />
+          </button>
         </div>
 
         {/* Main content */}
-        <main className="flex-1 p-6">
-          {children}
+        <main className={styles.mainSection}>
+          {/* Header */}
+          <div className={styles.headerSection}>
+            <div className={styles.headerContent}>
+              <div className={styles.headerTitleContainer}>
+                <h2 className={styles.headerTitle}>
+                  {navigation.find(item => item.href === location.pathname)?.name || 'Dashboard'}
+                </h2>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.contentContainer}>
+            {children}
+          </div>
         </main>
       </div>
     </div>
   );
-} 
+}

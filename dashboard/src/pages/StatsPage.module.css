@@ -1,0 +1,130 @@
+.container {
+  padding: 2rem;
+  background-color: #f9f9f9;
+}
+
+.card {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.textLg {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.label {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.input {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.btnSubmit {
+  padding: 0.5rem 1rem;
+  background-color: #4f46e5;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.btnSubmit:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.chartContainer {
+  height: 300px;
+}
+
+.spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 4px solid #ddd;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.noData {
+  text-align: center;
+  color: #666;
+}
+
+.gridCols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.textSm {
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.text3xl {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.textSmGreen {
+  color: #16a34a;
+}
+
+.textSmGray {
+  color: #9ca3af;
+}
+
+.textXl {
+  font-size: 1.25rem;
+  font-weight: bold;
+}
+
+.animatePulse {
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
