@@ -16,14 +16,21 @@ export default function AlertsPage() {
     condition: '',
     threshold: 0,
   });
+  const apiUrl = import.meta.env.VITE_API_URL;
+  const appVersion = import.meta.env.VITE_APP_VERSION;
+  const isDevMode = import.meta.env.VITE_NODE_ENV === 'development';
 
   useEffect(() => {
+    if (isDevMode) {
+      console.log(`Loading alerts page, app version: ${appVersion}`);
+    }
     fetchRules();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isDevMode, appVersion]);
 
   const fetchRules = async () => {
     try {
-      const response = await axios.get('/api/alerts');
+      const response = await axios.get(`${apiUrl}/alerts`);
       setRules(response.data);
     } catch (error) {
       console.error('Error fetching alert rules:', error);
@@ -33,7 +40,7 @@ export default function AlertsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await axios.post('/api/alerts', newRule);
+      await axios.post(`${apiUrl}/alerts`, newRule);
       setNewRule({ name: '', condition: '', threshold: 0 });
       fetchRules();
     } catch (error) {
@@ -43,7 +50,7 @@ export default function AlertsPage() {
 
   const toggleRule = async (id: number, isActive: boolean) => {
     try {
-      await axios.patch(`/api/alerts/${id}`, { isActive: !isActive });
+      await axios.patch(`${apiUrl}/alerts/${id}`, { isActive: !isActive });
       fetchRules();
     } catch (error) {
       console.error('Error toggling alert rule:', error);
@@ -131,4 +138,4 @@ export default function AlertsPage() {
       </div>
     </div>
   );
-} 
+}

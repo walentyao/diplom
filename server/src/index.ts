@@ -4,10 +4,10 @@ import dotenv from 'dotenv';
 import sequelize from './config/database.js';
 import logRoutes from './routes/logRoutes.js';
 import alertRoutes from './routes/alertRoutes.js';
-import eventRoutes from './routes/eventRoutes';
-import anomalyRoutes from './routes/anomalyRoutes'; // Добавлен импорт маршрутов аномалий
+import eventRoutes from './routes/eventRoutes.js';
+import anomalyRoutes from './routes/anomalyRoutes.js'; // Добавлен импорт маршрутов аномалий
 import AlertService from './services/alertService.js';
-import { AnomalyService } from './services/anomalyService'; // Добавлен импорт сервиса аномалий
+import { AnomalyService } from './services/anomalyService.js'; // Добавлен импорт сервиса аномалий
 
 dotenv.config();
 

@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
-import { User } from '../models/User';
-import { ApiKey } from '../models/ApiKey';
-import { NotFoundError } from '../utils/errors';
+import { User } from '../models/User.js';
+import { ApiKey } from '../models/ApiKey.js';
+import { NotFoundError } from '../utils/errors.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 

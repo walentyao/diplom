@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { login, createApiKey, deactivateApiKey } from '../controllers/authController';
-import { authenticateJWT, requireAdmin } from '../middleware/auth';
+import { login, createApiKey, deactivateApiKey } from '../controllers/authController.js';
+import { authenticateJWT, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
 

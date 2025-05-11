@@ -1,6 +1,6 @@
 import { Model, DataTypes } from 'sequelize';
-import sequelize from '../config/database';
-import bcrypt from 'bcrypt';
+import sequelize from '../config/database.js';
+import * as argon2 from 'argon2';
 
 export interface UserAttributes {
   id?: number;
@@ -16,7 +16,7 @@ class User extends Model<UserAttributes> implements UserAttributes {
   public role!: 'admin' | 'user';
 
   public async comparePassword(candidatePassword: string): Promise<boolean> {
-    return bcrypt.compare(candidatePassword, this.password);
+    return argon2.verify(this.password, candidatePassword);
   }
 }
 
@@ -49,16 +49,16 @@ User.init(
     hooks: {
       beforeCreate: async (user: User) => {
         if (user.password) {
-          user.password = await bcrypt.hash(user.password, 10);
+          user.password = await argon2.hash(user.password);
         }
       },
       beforeUpdate: async (user: User) => {
         if (user.changed('password')) {
-          user.password = await bcrypt.hash(user.password, 10);
+          user.password = await argon2.hash(user.password);
         }
       }
     }
   }
 );
 
-export { User }; 
+export { User };

@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { createLog, getLogs, getGroupedErrors, getErrorsPerHour } from '../controllers/logController.js';
-import { exportLogs } from '../controllers/exportController';
-import { authenticateApiKey, authenticateJWT, requireAdmin } from '../middleware/auth';
+import {  getGroupedErrors, getErrorsPerHour } from '../controllers/logController.js';
+import { exportLogs } from '../controllers/exportController.js';
+import { authenticateApiKey, authenticateJWT, requireAdmin } from '../middleware/auth.js';
 
 const router = Router();
 

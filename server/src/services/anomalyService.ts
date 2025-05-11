@@ -1,8 +1,8 @@
-import { Anomaly, AnomalyAttributes } from '../models/Anomaly';
-import { Error } from '../models/Error';
-import { logger } from '../utils/logger';
+import { Anomaly, AnomalyAttributes } from '../models/Anomaly.js';
+import { Error } from '../models/Error.js';
+import { logger } from '../utils/logger.js';
 import { Op } from 'sequelize';
-import { NotFoundError } from '../utils/errors';
+import { NotFoundError } from '../utils/errors.js';
 
 export class AnomalyService {
   private static instance: AnomalyService;

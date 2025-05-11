@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AnomalyService } from '../services/anomalyService';
+import { AnomalyService } from '../services/anomalyService.js';
 
 const anomalyService = AnomalyService.getInstance();
 

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Event, EventCreationAttributes } from '../models/Event';
+import { Event, EventCreationAttributes } from '../models/Event.js';
 
 export const trackEvent = async (req: Request, res: Response) => {
   try {

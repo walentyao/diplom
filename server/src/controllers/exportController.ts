@@ -1,9 +1,8 @@
 import { Request, Response } from 'express';
-import { createWriteStream } from 'fs';
 import { format } from 'fast-csv';
 import { Op } from 'sequelize';
-import Log from '../models/Log';
-import { AuthRequest } from '../middleware/auth';
+import Log from '../models/Log.js';
+import { AuthRequest } from '../middleware/auth.js';
 
 interface ExportFilters {
   type?: string;
